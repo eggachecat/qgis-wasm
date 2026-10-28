@@ -1,0 +1,28 @@
+name: tests
+
+# Fast checks that need no browser and no build: the layering guard, the SigV4 implementation, the shared-server
+# behaviour, the Open Source guard and the documentation links. Seconds on a hosted runner.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: layering (QGIS sees files and tool calls only)
+        run: node tests/layering.test.mjs
+      - name: SigV4 signing
+        run: node tests/cloudfs-sign.test.mjs
+      - name: shared server (page addressing, proxy allow-list)
+        run: node tests/serve-shared.test.mjs
+      - name: documentation links (Chinese and English)
+        run: node tests/links.test.mjs
+      - name: no secrets or internal names
+        run: node tests/oss-guard.mjs .

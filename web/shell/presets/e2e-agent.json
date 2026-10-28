@@ -1,0 +1,95 @@
+{
+  "name": "e2e-agent",
+  "title": "QGIS wasm e2e (agent)",
+  "settings": {
+    "qgis/checkVersion": false,
+    "qgis/allowVersionCheck": false,
+    "qgis/monitorDirectoriesInBrowser": false,
+    "UI/lastProjectDir": "/cloud/gis",
+    "UI/lastVectorFileFilterDir": "/cloud/gis"
+  },
+  "basemaps": [
+    {
+      "name": "OpenStreetMap",
+      "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+      "zmin": 0,
+      "zmax": 19
+    },
+    {
+      "name": "E2E Local Tiles",
+      "url": "http://127.0.0.1:9124/data/tiles/{z}/{x}/{y}.png",
+      "zmin": 0,
+      "zmax": 3
+    }
+  ],
+  "favorites": [
+    {
+      "path": "/cloud",
+      "name": "Cloud"
+    },
+    {
+      "path": "/qgis/share/demo",
+      "name": "Demo data"
+    }
+  ],
+  "mounts": [
+    {
+      "type": "s3",
+      "name": "gis",
+      "endpoint": "http://127.0.0.1:9123",
+      "bucket": "gis",
+      "region": "us-east-1",
+      "accessKeyId": "TESTKEY",
+      "secretAccessKey": "TESTSECRET",
+      "pathStyle": true
+    }
+  ],
+  "share": {
+    "mount": "gis",
+    "prefix": "projects"
+  },
+  "sources": [
+    {
+      "name": "features",
+      "type": "ogcapi",
+      "title": "E2E OGC API Features",
+      "url": "http://127.0.0.1:9124/ogcapi"
+    }
+  ],
+  "plugins": [
+    "plugins/example-plugin.js"
+  ],
+  "plugins_python": [
+    "plugins/hello_pyqgis/"
+  ],
+  "python": {
+    "indexUrl": "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/"
+  },
+  "plugins_cpp": [],
+  "open": [],
+  "agent": {
+    "baseUrl": "http://127.0.0.1:9125/v1",
+    "model": "mock-model",
+    "apiKey": "mock",
+    "mcpServers": [
+      {
+        "name": "catalog",
+        "url": "http://127.0.0.1:9124/mcp"
+      }
+    ],
+    "provider": "openai-responses",
+    "skills": [
+      "agent/skills/import-wizard.js",
+      "agent/skills/analysis.js"
+    ],
+    "tools": {
+      "confirm": [
+        "project_save"
+      ]
+    },
+    "ui": {
+      "title": "QGIS Agent (mock)",
+      "openOnStart": false
+    }
+  }
+}

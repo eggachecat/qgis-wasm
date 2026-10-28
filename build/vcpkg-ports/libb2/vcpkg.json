@@ -1,0 +1,11 @@
+{
+  "name": "libb2",
+  "version": "0.98.1",
+  "port-version": 100,
+  "description": "C library providing BLAKE2b, BLAKE2s, BLAKE2bp, BLAKE2sp (portable reference implementation, CMake build: no autotools needed, works for Emscripten)",
+  "homepage": "https://github.com/BLAKE2/libb2",
+  "license": "CC0-1.0",
+  "dependencies": [
+    { "name": "vcpkg-cmake", "host": true }
+  ]
+}

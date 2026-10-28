@@ -1,0 +1,22 @@
+# systemd unit for the qgis-wasm server (installed by scripts/deploy.sh, placeholders filled in there).
+# serve.mjs listens on loopback only; nginx (deploy/nginx-qgis.conf) or the organisation's TLS load balancer fronts it.
+[Unit]
+Description=qgis-wasm: QGIS Desktop in the browser (bundle + MCP/agent gateway)
+After=network.target
+
+[Service]
+Type=simple
+User=__USER__
+WorkingDirectory=__DIR__
+ExecStart=__NODE__ __DIR__/serve.mjs --host 127.0.0.1 --port __PORT__ --dir __DIR__/bin --shared --public-url __PUBLIC_URL__
+Restart=always
+RestartSec=2
+Environment=NODE_ENV=production
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadOnlyPaths=__DIR__
+
+[Install]
+WantedBy=multi-user.target

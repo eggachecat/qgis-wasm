@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QGIS Desktop — WebAssembly</title>
+  <!-- static hosts without COOP/COEP headers: a service worker adds them and the page reloads once -->
+  <script src="coi-serviceworker.js"></script>
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #1e1e1e; color: #ddd; font: 14px/1.5 system-ui, sans-serif; }
+    #screen { position: fixed; inset: 0; }
+    #loading { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; background: #1e1e1e; transition: opacity .4s; }
+    #loading.hidden { opacity: 0; pointer-events: none; }
+    .box { width: min(520px, 90vw); text-align: center; }
+    .box h1 { font-size: 22px; font-weight: 600; margin: 0 0 6px; color: #fff; }
+    .box p { margin: 4px 0; color: #aaa; }
+    .ring { width: 40px; height: 40px; margin: 0 auto 18px; border: 4px solid #444; border-top-color: #589632; border-radius: 50%; animation: turn .9s linear infinite; }
+    @keyframes turn { to { transform: rotate(360deg); } }
+    .bar { height: 6px; background: #333; border-radius: 3px; overflow: hidden; margin: 14px 0 6px; }
+    .bar > div { height: 100%; width: 0; background: #589632; transition: width .2s; }
+    #unsupported { display: none; max-width: 640px; margin: 48px auto; padding: 24px; background: #2a2a2a; border-radius: 10px; line-height: 1.5; }
+    #unsupported code { background: #1a1a1a; padding: 1px 5px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div id="screen"></div>
+  <div id="loading"><div class="box">
+    <div class="ring"></div>
+    <h1>QGIS Desktop <small>WebAssembly</small></h1>
+    <p id="stage">Checking the browser…</p>
+    <div class="bar"><div id="fill"></div></div>
+    <p id="meter"></p>
+    <div id="unsupported"></div>
+  </div></div>
+  <script>
+  // The smallest page that runs the real QGIS desktop compiled to WebAssembly: a browser preflight, Qt's loader with the
+  // module, a byte counter for the two big files, and the user's home directory kept in IndexedDB between visits.
+  (function () {
+    var $ = function (id) { return document.getElementById(id); };
+    var missing = [];
+    if (typeof WebAssembly === 'undefined' || typeof WebAssembly.Suspending !== 'function') missing.push('WebAssembly JSPI (JavaScript Promise Integration): Chrome / Edge 137+, Safari 27+; Firefox needs javascript.options.wasm_js_promise_integration');
+    if (typeof SharedArrayBuffer === 'undefined' || !self.crossOriginIsolated) missing.push('SharedArrayBuffer (cross-origin isolation): the server must send Cross-Origin-Opener-Policy: same-origin and Cross-Origin-Embedder-Policy: credentialless, or the page must be on a secure origin so coi-serviceworker.js can add them');
+    if (missing.length) {
+      if (window.qgisCoiPending && missing.length === 1 && /SharedArrayBuffer/.test(missing[0])) { $('stage').textContent = 'Enabling cross-origin isolation (service worker) — reloading…'; return; }
+      $('stage').textContent = 'This browser cannot run QGIS for WebAssembly here';
+      $('unsupported').style.display = 'block';
+      $('unsupported').innerHTML = '<p>Missing:</p><ul>' + missing.map(function (m) { return '<li>' + m + '</li>'; }).join('') + '</ul><p>' + navigator.userAgent + '</p>';
+      window.qgisStatus = 'unsupported';
+      return;
+    }
+    // count the bytes of qgis.wasm / qgis.data as the module fetches them (sizes from qgis.bundle.json when present)
+    var sizes = {}, loaded = {}, orig = window.fetch;
+    fetch('qgis.bundle.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (m) { if (m && m.files) for (var k in m.files) sizes[k] = m.files[k].size; }).catch(function () {});
+    var render = function () {
+      var total = 0, got = 0; for (var k in loaded) { total += sizes[k] || 0; got += loaded[k]; }
+      if (total) { $('fill').style.width = Math.min(100, 100 * got / total).toFixed(1) + '%'; $('meter').textContent = (got / 1e6).toFixed(1) + ' MB of ' + (total / 1e6).toFixed(0) + ' MB'; }
+    };
+    window.fetch = function (input, init) {
+      var url = typeof input === 'string' ? input : input && input.url, name = null;
+      try { name = new URL(url, location.href).pathname.split('/').pop(); } catch (e) { /* ignore */ }
+      if (name !== 'qgis.wasm' && name !== 'qgis.data') return orig.call(this, input, init);
+      return orig.call(this, input, init).then(function (res) {
+        if (!res.ok || !res.body) return res;
+        var reader = res.clone().body.getReader(); loaded[name] = 0;
+        (function pump() { reader.read().then(function (r) { if (r.done) return; loaded[name] += r.value.byteLength; render(); pump(); }).catch(function () {}); })();
+        return res;
+      });
+    };
+    $('stage').textContent = 'Downloading QGIS';
+    var load = function () {
+      $('stage').textContent = 'Downloading and compiling QGIS';
+      qtLoad({
+        qt: {
+          entryFunction: window.qgis_entry,
+          containerElements: [$('screen')],
+          environment: { QGIS_PREFIX_PATH: '/qgis', PROJ_DATA: '/proj', HOME: '/home/web_user', QGIS_LOG_FILE: '', GDAL_DISABLE_READDIR_ON_OPEN: 'EMPTY_DIR' },
+          onLoaded: function () { window.qgisStatus = 'loaded'; $('stage').textContent = 'QGIS is starting'; setTimeout(function () { $('loading').classList.add('hidden'); }, 2500); },
+          onExit: function (e) { window.qgisStatus = 'exited'; $('stage').textContent = 'QGIS exited (' + (e.code === undefined ? '?' : e.code) + ') ' + (e.text || ''); },
+        },
+        arguments: ['--noversioncheck', '--globalsettingsfile', '/qgis/share/qgis/resources/qgis_global_settings.ini'],
+        preRun: [function (module) {
+          $('stage').textContent = 'Restoring your profile';
+          module.FS.mkdirTree('/home/web_user');
+          module.FS.mount(module.IDBFS, {}, '/home/web_user');           // settings and files survive a reload
+          module.addRunDependency('idbfs');
+          module.FS.syncfs(true, function () { module.removeRunDependency('idbfs'); });
+        }],
+      }).then(function (instance) {
+        window.qgisInstance = instance;
+        setInterval(function () { instance.FS.syncfs(false, function () {}); }, 15000);
+        window.addEventListener('pagehide', function () { instance.FS.syncfs(false, function () {}); });
+      }).catch(function (e) { window.qgisStatus = 'exited'; $('stage').textContent = 'Failed to start QGIS: ' + (e && e.message || e); });
+    };
+    // qtloader.js (Qt's loader) then qgis.js (the module), in order
+    ['qtloader.js', 'qgis.js'].reduce(function (p, src) { return p.then(function () { return new Promise(function (ok, bad) { var s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = function () { bad(new Error('could not load ' + src)); }; document.body.appendChild(s); }); }); }, Promise.resolve()).then(load).catch(function (e) { $('stage').textContent = String(e.message || e); });
+  })();
+  </script>
+</body>
+</html>

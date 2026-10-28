@@ -1,0 +1,27 @@
+{
+  "root": "/qgis_shim",
+  "files": [
+    "processing/__init__.py",
+    "PyQt5/__init__.py",
+    "PyQt5/QtCore.py",
+    "PyQt5/QtGui.py",
+    "PyQt5/QtWidgets.py",
+    "PyQt5/uic.py",
+    "PyQt6/__init__.py",
+    "PyQt6/QtCore.py",
+    "PyQt6/QtGui.py",
+    "PyQt6/QtWidgets.py",
+    "PyQt6/uic.py",
+    "qgis/_bridge.py",
+    "qgis/core.py",
+    "qgis/gui.py",
+    "qgis/__init__.py",
+    "qgis/_processing_registry.py",
+    "qgis/PyQt/__init__.py",
+    "qgis/PyQt/QtCore.py",
+    "qgis/PyQt/QtGui.py",
+    "qgis/PyQt/QtWidgets.py",
+    "qgis/PyQt/uic.py",
+    "qgis/utils.py"
+  ]
+}

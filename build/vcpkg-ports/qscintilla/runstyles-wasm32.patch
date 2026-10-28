@@ -1,0 +1,11 @@
+--- a/scintilla/src/RunStyles.cpp
++++ b/scintilla/src/RunStyles.cpp
+@@ -309,6 +309,7 @@
+ template class Scintilla::RunStyles<int, int>;
+ template class Scintilla::RunStyles<int, char>;
+-#if (PTRDIFF_MAX != INT_MAX) || PLAT_HAIKU
++// wasm32: ptrdiff_t is 'long' (a distinct 32-bit type), so these instantiations are still required
++#if (PTRDIFF_MAX != INT_MAX) || PLAT_HAIKU || defined(__EMSCRIPTEN__)
+ template class Scintilla::RunStyles<ptrdiff_t, int>;
+ template class Scintilla::RunStyles<ptrdiff_t, char>;
+ #endif

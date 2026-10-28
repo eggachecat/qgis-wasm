@@ -1,0 +1,47 @@
+name: pages
+
+# Build the bundle and publish it to the `gh-pages` branch.
+#
+# This needs a machine with ~110 GB free disk, a Qt/GDAL/QGIS build tree and the toolchains that
+# scripts/bootstrap.sh + scripts/build-deps.sh install — far beyond a hosted runner (≈14 GB, 4 cores).
+# Register this machine as a self-hosted runner (Settings → Actions → Runners → New self-hosted runner)
+# with the labels `self-hosted`, `linux`, `qgis-wasm`, then either run this workflow manually or
+# uncomment the `push` trigger below.
+on:
+  workflow_dispatch:
+  # push:
+  #   branches: [main]
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: [self-hosted, linux, qgis-wasm]
+    permissions:
+      contents: write          # push the gh-pages branch
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0       # export-pages.sh parents each export on the previous one
+
+      - name: toolchains and the QGIS patch
+        run: |
+          scripts/bootstrap.sh
+          scripts/apply-patches.sh
+
+      - name: dependencies (idempotent — reuses build/wasm/vcpkg_installed)
+        run: scripts/build-deps.sh
+
+      - name: build QGIS for WebAssembly
+        run: scripts/build-qgis.sh
+
+      - name: publish gh-pages
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          scripts/export-pages.sh gh-pages
+          git push origin gh-pages

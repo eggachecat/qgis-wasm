@@ -1,0 +1,25 @@
+# toolchains & build output (bootstrapped by scripts/bootstrap.sh)
+build/vcpkg
+build/emsdk
+build/wasm
+build/qgis
+build/dist
+vcpkg_installed
+node_modules
+*.log
+docs/screenshots/console.log
+__pycache__/
+docs/screenshots/console-features.log
+build/reports
+build/minimal-bin
+build/local
+build/src
+build/tools
+build/venv
+build/pages-test
+build/ssh
+.wrangler/
+build/npm-cache
+build/wrangler-config
+build/pages-static
+build/pages-cf

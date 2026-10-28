@@ -1,0 +1,132 @@
+{
+  "name": "default",
+  "title": "QGIS Desktop — WebAssembly",
+  "links": [
+    {
+      "title": "Source code",
+      "url": "https://github.com/eggachecat/qgis-wasm"
+    },
+    {
+      "title": "Documentation (docs/)",
+      "url": "https://github.com/eggachecat/qgis-wasm/tree/main/docs"
+    }
+  ],
+  "ui": {
+    "openOnStart": true,
+    "layout": "float",
+    "width": 480,
+    "height": null,
+    "title": "Workspace"
+  },
+  "settings": {
+    "qgis/checkVersion": false,
+    "qgis/allowVersionCheck": false,
+    "qgis/monitorDirectoriesInBrowser": false,
+    "qgis/formatLayerName": false,
+    "UI/lastProjectDir": "/home/web_user",
+    "UI/lastVectorFileFilterDir": "/home/web_user"
+  },
+  "enforce": {},
+  "basemaps": [
+    {
+      "name": "OpenStreetMap",
+      "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+      "zmin": 0,
+      "zmax": 19
+    },
+    {
+      "name": "OpenTopoMap",
+      "url": "https://tile.opentopomap.org/{z}/{x}/{y}.png",
+      "zmin": 0,
+      "zmax": 17
+    },
+    {
+      "name": "CARTO Positron",
+      "url": "https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
+      "zmin": 0,
+      "zmax": 20
+    },
+    {
+      "name": "Esri World Imagery",
+      "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      "zmin": 0,
+      "zmax": 19
+    }
+  ],
+  "favorites": [
+    {
+      "path": "/home/web_user",
+      "name": "Home"
+    },
+    {
+      "path": "/cloud",
+      "name": "Cloud"
+    },
+    {
+      "path": "/qgis/share/demo",
+      "name": "Demo data"
+    }
+  ],
+  "mounts": [],
+  "share": {
+    "mount": "",
+    "prefix": "projects"
+  },
+  "sources": [
+    {
+      "name": "pygeoapi-demo",
+      "type": "ogcapi",
+      "title": "pygeoapi demo (OGC API Features)",
+      "description": "public demo server of pygeoapi — an example of an OGC API Features query source; your own services are declared the same way",
+      "url": "https://demo.pygeoapi.io/master",
+      "proxy": "auto",
+      "limit": 1000
+    },
+    {
+      "name": "osm",
+      "type": "overpass",
+      "title": "OpenStreetMap (Overpass)",
+      "description": "OSM features by tag filter or Overpass QL within a bbox (public Overpass API — be gentle with it, or point this at your own mirror)",
+      "url": "https://overpass-api.de/api/interpreter",
+      "proxy": "auto",
+      "limit": 5000,
+      "timeout": 60
+    }
+  ],
+  "plugins": [
+    "plugins/example-plugin.js"
+  ],
+  "plugins_python": [
+    "plugins/hello_pyqgis/"
+  ],
+  "python": {
+    "indexUrl": "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/"
+  },
+  "plugins_cpp": [],
+  "open": [],
+  "agent": {
+    "baseUrl": "",
+    "model": "",
+    "apiKey": "",
+    "mcpServers": [],
+    "provider": "",
+    "skills": [
+      "agent/skills/import-wizard.js",
+      "agent/skills/analysis.js"
+    ],
+    "tools": {
+      "confirm": []
+    },
+    "ui": {
+      "title": "QGIS Agent",
+      "suggestions": [
+        "Add an OpenStreetMap basemap and zoom to Europe",
+        "Import https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson and colour the countries by continent",
+        "Load the traffic signals of the current view from OpenStreetMap and label them",
+        "Buffer the loaded points by 100 m, count the overlaps and style the result",
+        "Share this view as a snapshot link"
+      ]
+    },
+    "hints": "No model is configured in this deployment: the agent settings (gear in the workspace) take an OpenAI-compatible or Anthropic endpoint and key, and a local Ollama is detected automatically. Data: 'osm' (type overpass) loads OpenStreetMap features — sources_load with source 'osm', a bbox and a collection (traffic_signals, crossings, stop_signs, motorway_junctions, roads, railways, buildings, parking, construction, tunnels_bridges) or tag filters such as 'amenity=cafe'. Typical flow: basemaps_use OpenStreetMap, layers_add or sources_load, layer_style_set, layers_zoom_to, then a short summary with counts. Sharing needs a cloud mount (mounts_add, or the preset's mounts): project_share stores a snapshot there and returns a ?share= link; view_link is the live recipe."
+  }
+}

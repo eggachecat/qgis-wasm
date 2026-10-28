@@ -1,0 +1,131 @@
+{
+  "name": "qgis-wasm",
+  "version": "0.1.0",
+  "description": "Dependencies for building the real QGIS desktop (core + gui + app) with Emscripten / Qt for WebAssembly",
+  "vcpkg-configuration": {
+    "overlay-triplets": [
+      "./build/vcpkg-triplets"
+    ],
+    "overlay-ports": [
+      "./build/vcpkg-ports"
+    ]
+  },
+  "dependencies": [
+    "geos",
+    "gsl",
+    {
+      "name": "sqlite3",
+      "default-features": false,
+      "features": [
+        "rtree",
+        "json1",
+        "fts3"
+      ]
+    },
+    {
+      "name": "proj",
+      "default-features": false,
+      "features": [
+        "tiff"
+      ]
+    },
+    {
+      "name": "gdal",
+      "default-features": false,
+      "features": [
+        "geos",
+        "sqlite3"
+      ]
+    },
+    "libspatialindex",
+    "expat",
+    {
+      "name": "libzip",
+      "default-features": false
+    },
+    "protobuf",
+    "zlib",
+    "zstd",
+    "exiv2",
+    {
+      "name": "freetype",
+      "default-features": false,
+      "features": [
+        "zlib"
+      ]
+    },
+    {
+      "name": "freetype",
+      "default-features": false,
+      "host": true
+    },
+    {
+      "name": "qtbase",
+      "default-features": false,
+      "features": [
+        "opengl",
+        "gles3",
+        "concurrent",
+        "freetype",
+        "gui",
+        "jpeg",
+        "png",
+        "network",
+        "widgets",
+        "sql",
+        "sql-sqlite"
+      ]
+    },
+    {
+      "name": "qtbase",
+      "host": true,
+      "default-features": false,
+      "features": [
+        "thread",
+        "concurrent"
+      ]
+    },
+    {
+      "name": "qt5compat",
+      "default-features": false,
+      "features": [
+        "textcodec"
+      ]
+    },
+    {
+      "name": "qtkeychain-qt6",
+      "default-features": false
+    },
+    {
+      "name": "qtsvg",
+      "default-features": false
+    },
+    {
+      "name": "qtmultimedia",
+      "default-features": false,
+      "features": [
+        "widgets"
+      ]
+    },
+    {
+      "name": "qtdeclarative",
+      "default-features": false
+    },
+    {
+      "name": "qttools",
+      "default-features": false
+    },
+    {
+      "name": "qttools",
+      "host": true,
+      "default-features": false,
+      "features": [
+        "linguist"
+      ]
+    },
+    {
+      "name": "qscintilla",
+      "default-features": false
+    }
+  ]
+}

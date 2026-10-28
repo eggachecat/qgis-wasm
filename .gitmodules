@@ -1,0 +1,3 @@
+[submodule "external/QGIS"]
+	path = external/QGIS
+	url = https://github.com/qgis/QGIS.git
