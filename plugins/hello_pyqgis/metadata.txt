@@ -1,0 +1,12 @@
+[general]
+name=Hello PyQGIS
+qgisMinimumVersion=3.0
+description=Example Python plugin for the browser QGIS: menu + toolbar actions, QgsProject / QgsVectorLayer, message bar, QInputDialog, processing.run
+about=Written with the usual PyQGIS names (Plugin Builder style). Runs in Pyodide on the page and drives the real QGIS through the control surface.
+version=1.0.0
+author=qgis-wasm
+email=dev@example.com
+icon=icon.svg
+category=Plugins
+experimental=False
+supportsQt6=True

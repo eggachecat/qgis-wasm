@@ -1,0 +1,29 @@
+{
+  "built": "2026-10-28T16:28:50.982Z",
+  "files": {
+    "qgis.wasm": {
+      "size": 133763229,
+      "br": 30715423,
+      "gz": 39058428,
+      "static": "gz"
+    },
+    "qgis.data": {
+      "size": 18770863,
+      "br": 2931519,
+      "gz": 3945717,
+      "static": "gz"
+    },
+    "qgis.js": {
+      "size": 432323,
+      "br": 83084,
+      "gz": 91773
+    },
+    "world_map.gpkg": {
+      "size": 12914688,
+      "lazy": true,
+      "br": 4543046,
+      "gz": 9077773
+    }
+  },
+  "static": true
+}

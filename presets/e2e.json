@@ -1,0 +1,132 @@
+{
+  "name": "e2e",
+  "title": "QGIS Desktop — WebAssembly (e2e preset)",
+  "links": [
+    {
+      "title": "Source code",
+      "url": "https://github.com/eggachecat/qgis-wasm"
+    }
+  ],
+  "ui": {
+    "openOnStart": false,
+    "title": "Workspace (e2e)"
+  },
+  "settings": {
+    "qgis/checkVersion": false,
+    "qgis/allowVersionCheck": false,
+    "qgis/monitorDirectoriesInBrowser": false,
+    "UI/lastProjectDir": "/cloud/gis",
+    "UI/lastVectorFileFilterDir": "/cloud/gis"
+  },
+  "basemaps": [
+    {
+      "name": "OpenStreetMap",
+      "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+      "zmin": 0,
+      "zmax": 19
+    },
+    {
+      "name": "E2E Local Tiles",
+      "url": "http://127.0.0.1:9124/data/tiles/{z}/{x}/{y}.png",
+      "zmin": 0,
+      "zmax": 3
+    }
+  ],
+  "favorites": [
+    {
+      "path": "/cloud",
+      "name": "Cloud"
+    },
+    {
+      "path": "/qgis/share/demo",
+      "name": "Demo data"
+    }
+  ],
+  "mounts": [
+    {
+      "type": "s3",
+      "name": "gis",
+      "endpoint": "http://127.0.0.1:9123",
+      "bucket": "gis",
+      "region": "us-east-1",
+      "accessKeyId": "TESTKEY",
+      "secretAccessKey": "TESTSECRET",
+      "pathStyle": true
+    }
+  ],
+  "share": {
+    "mount": "gis",
+    "prefix": "projects"
+  },
+  "sources": [
+    {
+      "name": "catalog",
+      "type": "catalog",
+      "title": "E2E catalogue",
+      "description": "the mock catalogue as a JSON list (tests/mock-mcp.mjs /catalog.json)",
+      "url": "http://127.0.0.1:9124/catalog.json"
+    },
+    {
+      "name": "features",
+      "type": "ogcapi",
+      "title": "E2E OGC API Features",
+      "description": "the mock catalogue as OGC API – Features collections (tests/mock-mcp.mjs /ogcapi)",
+      "url": "http://127.0.0.1:9124/ogcapi"
+    },
+    {
+      "name": "cities-api",
+      "type": "geojson",
+      "title": "E2E GeoJSON query API",
+      "url": "http://127.0.0.1:9124/ogcapi/collections/european_cities/items?f=json&q={q}&bbox={bbox}&limit={limit}",
+      "limit": 50
+    },
+    {
+      "name": "osm",
+      "type": "overpass",
+      "title": "E2E OpenStreetMap (Overpass mock)",
+      "url": "http://127.0.0.1:9124/overpass/api/interpreter",
+      "limit": 500
+    }
+  ],
+  "plugins": [
+    "plugins/example-plugin.js"
+  ],
+  "plugins_python": [
+    "plugins/hello_pyqgis/"
+  ],
+  "python": {
+    "indexUrl": "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/"
+  },
+  "plugins_cpp": [],
+  "open": [],
+  "agent": {
+    "baseUrl": "",
+    "model": "",
+    "apiKey": "",
+    "mcpServers": [
+      {
+        "name": "catalog",
+        "url": "http://127.0.0.1:9124/mcp"
+      }
+    ],
+    "provider": "",
+    "skills": [
+      "agent/skills/import-wizard.js",
+      "agent/skills/analysis.js"
+    ],
+    "tools": {
+      "confirm": [
+        "project_new",
+        "files_write_text",
+        "layers_remove",
+        "mounts_add",
+        "settings_set",
+        "python_plugins"
+      ]
+    },
+    "ui": {
+      "title": "QGIS Agent (e2e)",
+      "openOnStart": false
+    }
+  }
+}

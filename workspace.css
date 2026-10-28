@@ -1,0 +1,116 @@
+/* QGIS web workspace — flat: one accent, no gradients, no skeuomorphism. Light/dark follow the system (or data-theme). */
+.ws-root { --ws-w: 440px; --ws-bg: #ffffff; --ws-fg: #1b1f24; --ws-muted: #667085; --ws-border: #e4e7ec; --ws-surface: #f4f6f8; --ws-accent: var(--brand-accent, #589632); --ws-accent-ink: #0b0d0f; --ws-danger: #d1434b; --ws-shadow: 0 10px 32px rgba(16, 24, 40, .16); --ws-font: 14px/1.5 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Noto Sans CJK SC", sans-serif; font: var(--ws-font); color: var(--ws-fg); }
+@media (prefers-color-scheme: dark) { .ws-root:not([data-theme="light"]) { --ws-bg: #15181d; --ws-fg: #e6e8eb; --ws-muted: #9aa3ad; --ws-border: #2a2f37; --ws-surface: #1d2127; --ws-shadow: 0 10px 32px rgba(0, 0, 0, .5); } }
+.ws-root[data-theme="dark"] { --ws-bg: #15181d; --ws-fg: #e6e8eb; --ws-muted: #9aa3ad; --ws-border: #2a2f37; --ws-surface: #1d2127; --ws-shadow: 0 10px 32px rgba(0, 0, 0, .5); }
+.ws-root * { box-sizing: border-box; }
+
+/* the button: a flat green square */
+.ws-fab { position: fixed; right: 22px; bottom: 56px; width: 50px; height: 50px; border-radius: 12px; border: 0; cursor: pointer; z-index: 50; color: var(--ws-accent-ink); background: var(--ws-accent); display: grid; place-items: center; transition: background .15s, opacity .2s; }
+.ws-fab:hover { background: #86cf0a; }
+.ws-fab:focus-visible { outline: 2px solid var(--ws-fg); outline-offset: 2px; }
+.ws-fab svg { width: 26px; height: 26px; }
+.ws-fab .ws-badge { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; border-radius: 9px; background: var(--ws-danger); color: #fff; font-size: 11px; font-weight: 600; display: none; place-items: center; padding: 0 5px; }
+.ws-root[data-open="true"] .ws-fab { opacity: 0; pointer-events: none; }
+
+/* the panel: a card over the map (float) or a sidebar QGIS makes room for (dock) */
+.ws-panel { position: fixed; background: var(--ws-bg); display: flex; flex-direction: column; z-index: 49; color: var(--ws-fg); }
+.ws-root[data-layout="dock"] .ws-panel { top: 0; right: 0; bottom: 0; width: var(--ws-w, 440px); max-width: 100vw; border-left: 1px solid var(--ws-border); transform: translateX(100%); transition: transform .22s cubic-bezier(.2, .7, .2, 1); }
+.ws-root[data-layout="dock"][data-open="true"] .ws-panel { transform: none; }
+.ws-root[data-layout="float"] .ws-panel { right: var(--ws-x, 22px); bottom: var(--ws-y, 22px); width: var(--ws-w, 440px); height: var(--ws-h, 640px); max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); border: 1px solid var(--ws-border); border-radius: 14px; box-shadow: var(--ws-shadow); overflow: hidden; transform: translateY(10px); opacity: 0; pointer-events: none; transition: transform .2s cubic-bezier(.2, .7, .2, 1), opacity .18s; }
+.ws-root[data-layout="float"][data-open="true"] .ws-panel { transform: none; opacity: 1; pointer-events: auto; }
+/* closed: nothing inside the card may receive pointer events or focus — QGIS underneath must get every click
+   (a descendant with its own pointer-events would otherwise swallow clicks on the invisible card) */
+.ws-root:not([data-open="true"]) .ws-panel, .ws-root:not([data-open="true"]) .ws-panel * { pointer-events: none !important; }
+.ws-root[data-layout="float"]:not([data-open="true"]) .ws-panel { visibility: hidden; transition: transform .2s cubic-bezier(.2, .7, .2, 1), opacity .18s, visibility 0s .2s; }
+.ws-root[data-layout="dock"]:not([data-open="true"]) .ws-panel { visibility: hidden; transition: transform .22s cubic-bezier(.2, .7, .2, 1), visibility 0s .22s; }
+.ws-root[data-layout="float"] .ws-head { cursor: grab; user-select: none; -webkit-user-select: none; }
+.ws-root.ws-moving .ws-head { cursor: grabbing; } .ws-root.ws-moving .ws-panel { transition: none; } .ws-root.ws-moving { user-select: none; }
+.ws-grip { display: none; position: absolute; left: 0; top: 0; width: 20px; height: 20px; cursor: nwse-resize; z-index: 3; }
+.ws-grip::before { content: ""; position: absolute; left: 6px; top: 6px; width: 8px; height: 8px; border-left: 2px solid var(--ws-muted); border-top: 2px solid var(--ws-muted); border-top-left-radius: 3px; opacity: .55; }
+.ws-grip:hover::before { opacity: 1; border-color: var(--ws-accent); }
+.ws-root[data-layout="float"] .ws-grip { display: block; }
+
+/* header: identity + flat tool buttons */
+.ws-head { display: flex; align-items: center; gap: 10px; padding: 10px 10px 10px 16px; border-bottom: 1px solid var(--ws-border); position: relative; }
+.ws-logo { width: 30px; height: 30px; border-radius: 8px; background: var(--ws-accent); color: var(--ws-accent-ink); display: grid; place-items: center; flex: none; }
+.ws-logo svg { width: 18px; height: 18px; }
+.ws-titles { flex: 1; min-width: 0; }
+.ws-title { font-weight: 600; font-size: 14px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ws-sub { font-size: 11.5px; color: var(--ws-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ws-tools { display: flex; align-items: center; gap: 2px; flex: none; }
+.ws-actions { display: flex; align-items: center; gap: 2px; }
+.ws-sep { width: 1px; height: 18px; background: var(--ws-border); margin: 0 4px; }
+.ws-tool { border: 0; background: transparent; color: var(--ws-muted); width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: grid; place-items: center; }
+.ws-tool:hover, .ws-tool[aria-expanded="true"] { background: var(--ws-surface); color: var(--ws-fg); }
+.ws-tool svg { width: 18px; height: 18px; }
+.ws-slot { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.ws-slot:empty::before { content: "The agent is loading…"; margin: auto; color: var(--ws-muted); font-size: 13px; }
+/* views (debug…) take the body instead of the agent's slot while active */
+.ws-views { display: none; flex: 1; min-height: 0; flex-direction: column; }
+.ws-root:not([data-view="agent"]) .ws-slot { display: none; }
+.ws-root:not([data-view="agent"]) .ws-views { display: flex; }
+.ws-view { display: none; flex: 1; min-height: 0; flex-direction: column; }
+.ws-view[data-active="true"] { display: flex; }
+.ws-tool[aria-pressed="true"] { background: var(--ws-surface); color: var(--ws-accent); }
+.ws-tool[data-badge]:not([data-badge=""])::after { content: attr(data-badge); position: absolute; top: 2px; right: 2px; min-width: 14px; height: 14px; border-radius: 7px; background: var(--ws-danger); color: #fff; font-size: 9.5px; font-weight: 600; display: grid; place-items: center; padding: 0 3px; }
+.ws-tool { position: relative; }
+
+/* menus */
+.ws-menu { position: fixed; z-index: 52; min-width: 300px; max-width: min(380px, calc(100vw - 16px)); overflow: auto; background: var(--ws-bg); border: 1px solid var(--ws-border); border-radius: 12px; box-shadow: var(--ws-shadow); padding: 6px; display: grid; gap: 1px; }
+.ws-menu-header { font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--ws-muted); padding: 8px 10px 4px; }
+.ws-menu-sep { height: 1px; background: var(--ws-border); margin: 4px 0; }
+.ws-menu-note { font-size: 12px; color: var(--ws-muted); padding: 6px 10px; word-break: break-word; } .ws-menu-note.error { color: var(--ws-danger); }
+.ws-menu-loading { font-size: 12.5px; color: var(--ws-muted); padding: 10px; }
+.ws-menu-item { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 0; background: transparent; color: var(--ws-fg); font: var(--ws-font); font-size: 13px; padding: 7px 10px; border-radius: 8px; cursor: pointer; text-decoration: none; }
+.ws-menu-item:hover { background: var(--ws-surface); }
+.ws-menu-icon { width: 18px; height: 18px; color: var(--ws-muted); flex: none; display: inline-flex; } .ws-menu-icon svg { width: 18px; height: 18px; }
+.ws-menu-item.check .ws-menu-icon { visibility: hidden; } .ws-menu-item.check[data-checked="true"] .ws-menu-icon { visibility: visible; color: var(--ws-accent); }
+.ws-menu-label { flex: 1; min-width: 0; display: grid; } .ws-menu-label small { color: var(--ws-muted); font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ws-menu-more { color: var(--ws-muted); font-size: 18px; line-height: 1; }
+.ws-menu-inputrow { display: flex; align-items: center; gap: 8px; padding: 4px 8px 6px; color: var(--ws-muted); } .ws-menu-inputrow svg { width: 16px; height: 16px; flex: none; }
+.ws-menu-input { flex: 1; border: 1px solid var(--ws-border); border-radius: 8px; background: var(--ws-surface); color: var(--ws-fg); padding: 6px 9px; font: var(--ws-font); font-size: 13px; outline: 0; }
+.ws-menu-input:focus { border-color: var(--ws-accent); }
+
+/* debug view (debug.js) */
+.dbg-head { padding: 10px 12px 8px; border-bottom: 1px solid var(--ws-border); display: grid; gap: 8px; }
+.dbg-title { font-weight: 600; font-size: 13px; display: flex; justify-content: space-between; } .dbg-counts { font-weight: 400; color: var(--ws-muted); font-size: 11.5px; }
+.dbg-perf { font: 11.5px/1.5 ui-monospace, Menlo, Consolas, monospace; color: var(--ws-muted); display: grid; gap: 1px; }
+.dbg-filters { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; } .dbg-sep { flex: 1; }
+.dbg-chip { border: 1px solid var(--ws-border); background: var(--ws-bg); color: var(--ws-fg); border-radius: 999px; padding: 2px 9px; font: 11.5px/1.5 var(--ws-font); cursor: pointer; }
+.dbg-chip[aria-pressed="true"] { background: var(--ws-accent); border-color: var(--ws-accent); color: var(--ws-accent-ink); }
+.dbg-list { flex: 1; min-height: 0; overflow: auto; font: 11.5px/1.45 ui-monospace, Menlo, Consolas, monospace; padding: 6px 8px; }
+.dbg-row { display: grid; grid-template-columns: 86px 42px 1fr; gap: 8px; padding: 2px 4px; border-radius: 4px; white-space: pre-wrap; word-break: break-word; }
+.dbg-row:nth-child(even) { background: var(--ws-surface); }
+.dbg-time { color: var(--ws-muted); } .dbg-src { color: var(--ws-muted); text-transform: uppercase; font-size: 10px; letter-spacing: .04em; padding-top: 1px; }
+.dbg-row.warn .dbg-text { color: #b7791f; } .dbg-row.error .dbg-text { color: var(--ws-danger); }
+.dbg-row[data-source="tool"] .dbg-src { color: var(--ws-accent); }
+
+/* running tasks (progress.js is the bus; this only listens): a strip under the header while the panel is open,
+   a pill beside the button and a ring on it while it is closed. Shown only for tasks that last longer than 150 ms. */
+.ws-progress { display: none; align-items: center; gap: 10px; padding: 8px 14px 9px 16px; border-bottom: 1px solid var(--ws-border); background: var(--ws-surface); position: relative; }
+.ws-progress[data-active="true"] { display: flex; }
+.ws-spin { width: 20px; height: 18px; color: var(--ws-accent); flex: none; display: inline-flex; }
+.ws-prog-text { flex: 1; min-width: 0; display: grid; }
+.ws-prog-label { font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ws-prog-detail { font-size: 11.5px; color: var(--ws-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.ws-prog-bar { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; overflow: hidden; }
+.ws-prog-bar > div { height: 100%; width: 0; background: var(--ws-accent); transition: width .2s; }
+.ws-progress[data-mode="indeterminate"] .ws-prog-bar > div { width: 30%; animation: ws-slide 1.2s ease-in-out infinite; }
+@keyframes ws-slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(340%); } }
+.ws-pill { position: fixed; right: 84px; bottom: 56px; height: 50px; max-width: min(440px, calc(100vw - 120px)); display: none; align-items: center; gap: 10px; padding: 0 16px 0 12px; border: 1px solid var(--ws-border); border-radius: 12px; background: var(--ws-bg); color: var(--ws-fg); box-shadow: var(--ws-shadow); cursor: pointer; z-index: 50; font: var(--ws-font); overflow: hidden; }
+.ws-pill[data-active="true"] { display: flex; }
+.ws-root[data-open="true"] .ws-pill { display: none; }
+.ws-pill-label { font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.ws-pill-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; overflow: hidden; }
+.ws-pill-bar > span { display: block; height: 100%; width: 0; background: var(--ws-accent); transition: width .2s; }
+.ws-pill[data-mode="indeterminate"] .ws-pill-bar > span { width: 30%; animation: ws-slide 1.2s ease-in-out infinite; }
+.ws-fab[data-busy="true"]::before { content: ""; position: absolute; inset: -5px; border-radius: 15px; border: 2px solid transparent; border-top-color: var(--ws-accent); border-right-color: var(--ws-accent); animation: ws-rotate 1s linear infinite; }
+@keyframes ws-rotate { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ws-fab[data-busy="true"]::before, .ws-progress[data-mode="indeterminate"] .ws-prog-bar > div, .ws-pill[data-mode="indeterminate"] .ws-pill-bar > span { animation: none; } }
+
+/* crash bar (workspace.js: window event "qgis-crash") — lives outside .ws-root, on top of the page */
+.ws-crash { position: fixed; top: 0; left: 0; right: 0; z-index: 60; display: flex; gap: 10px; align-items: center; padding: 8px 14px; background: #d1434b; color: #fff; font: 14px/1.4 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Noto Sans CJK SC", sans-serif; box-shadow: 0 4px 16px rgba(0, 0, 0, .25); }
+.ws-crash-text { flex: 1; min-width: 0; }
+.ws-crash-btn { flex: none; border: 1px solid rgba(255, 255, 255, .7); background: rgba(255, 255, 255, .12); color: #fff; border-radius: 6px; padding: 4px 10px; cursor: pointer; font: inherit; }
+.ws-crash-btn:hover { background: rgba(255, 255, 255, .25); }
+.ws-crash-x { flex: none; border: 0; background: transparent; color: #fff; font-size: 20px; line-height: 1; cursor: pointer; padding: 0 4px; }

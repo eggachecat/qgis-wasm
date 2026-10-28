@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QGIS Desktop — WebAssembly</title>
+  <!-- the page layer's stylesheets, before any script: the workspace and the agent are never painted unstyled -->
+  <link rel="stylesheet" href="workspace.css">
+  <link rel="stylesheet" href="agent/ui/agent.css">
+  <!-- static hosts without COOP/COEP headers: a service worker adds them and the page reloads once (no-op on scripts/serve.mjs / nginx) -->
+  <script src="coi-serviceworker.js"></script>
+  <!-- the deployment's look (name, accent colour, spinner) behind one interface; an overlay replaces this file to re-brand -->
+  <script src="brand.js"></script>
+  <style>
+    :root { --brand-accent: #589632; --brand-glow: rgba(88, 150, 50, .45); } /* brand.js overrides both */
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #1e1e1e; font: 14px system-ui, sans-serif; color: #ddd; }
+    #screen { position: fixed; inset: 0; }
+    /* loading overlay: the brand's spinner, real megabytes, what is happening and why (loading.js drives it) */
+    #loading { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; color: #e6e8eb; background: #0b0d0f radial-gradient(900px 520px at 50% -20%, color-mix(in srgb, var(--brand-accent) 16%, transparent), transparent 70%); font: 14px/1.5 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Noto Sans CJK SC", sans-serif; transition: opacity .5s ease; }
+    #loading.done { opacity: 0; pointer-events: none; }
+    #loading.hidden { display: none; }
+    .ld-wrap { width: min(600px, 92vw); display: grid; gap: 14px; justify-items: center; text-align: center; }
+    /* the spinner comes from brand.js (window.qgisBrand.spinner()); the workspace reuses it at 18 px for running tasks */
+    .ld-spinner { height: 64px; color: var(--brand-accent); filter: drop-shadow(0 0 10px var(--brand-glow)); }
+    /* veil: QGIS already runs behind it; a link is still opening its project (loading.js hold) and shows its progress here */
+    #loading.veil { background: rgba(11, 13, 15, .78); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+    #loading.veil .ld-subtitle, #loading.veil .ld-fact, #loading.veil .ld-files { display: none; }
+    #loading.veil .ld-spinner { height: 48px; }
+    .ld-title { font-size: 26px; font-weight: 600; letter-spacing: -.01em; color: #fff; margin-top: 4px; }
+    .ld-title small { display: block; font-size: 13px; font-weight: 400; letter-spacing: .08em; text-transform: uppercase; color: var(--brand-accent); margin-top: 2px; }
+    .ld-subtitle { color: #9aa3ad; font-size: 14px; max-width: 520px; }
+    .ld-stage { width: 100%; display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 14px; margin-top: 6px; }
+    .ld-stage span:last-child { color: #9aa3ad; font-variant-numeric: tabular-nums; font-size: 12.5px; }
+    .ld-bar { width: 100%; height: 6px; border-radius: 3px; background: #1f252c; overflow: hidden; }
+    .ld-bar > div { height: 100%; width: 0; background: var(--brand-accent); transition: width .25s ease; }
+    .ld-bar.indeterminate > div { width: 30% !important; animation: ld-slide 1.2s ease-in-out infinite; }
+    @keyframes ld-slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(340%); } }
+    .ld-meter { width: 100%; display: flex; justify-content: space-between; font-size: 12.5px; color: #9aa3ad; font-variant-numeric: tabular-nums; }
+    .ld-files { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; gap: 4px; font-size: 12.5px; color: #9aa3ad; font-variant-numeric: tabular-nums; }
+    .ld-files li { display: grid; grid-template-columns: 10px 1fr auto auto; gap: 10px; align-items: center; text-align: left; }
+    .ld-files li::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #3a424b; }
+    .ld-files li[data-state="active"]::before { background: var(--brand-accent); animation: ld-pulse 1s infinite; }
+    .ld-files li[data-state="done"]::before { background: var(--brand-accent); }
+    .ld-files li[data-state="done"] { color: #c7cdd3; }
+    .ld-files code { font: 12px ui-monospace, Menlo, Consolas, monospace; color: #c7cdd3; }
+    @keyframes ld-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+    .ld-fact { min-height: 44px; max-width: 540px; color: #b6bec6; font-size: 13px; transition: opacity .4s; }
+    .ld-fact b { color: #e6e8eb; font-weight: 600; }
+    .ld-foot { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; font-size: 12px; color: #6f7a85; margin-top: 4px; }
+    .ld-foot a { color: #8fd18f; text-decoration: none; } .ld-foot a:hover { text-decoration: underline; }
+    #log { position: fixed; left: 0; right: 0; top: 0; max-height: 30vh; overflow: auto; margin: 0; padding: 0 8px; font: 12px ui-monospace, monospace; white-space: pre-wrap; color: #f88; background: rgba(0,0,0,.6); z-index: 11; pointer-events: none; }
+    #log:empty { display: none; }
+    #unsupported { position: fixed; inset: 0; overflow: auto; padding: 48px 24px; box-sizing: border-box; background: #1e1e1e; z-index: 20; }
+    #unsupported[hidden] { display: none; }
+    #unsupported .card { max-width: 720px; margin: 0 auto; background: #2a2a2a; border: 1px solid #444; border-radius: 12px; padding: 28px 32px; line-height: 1.5; }
+    #unsupported h1 { font-size: 20px; margin: 0 0 12px; color: #fff; }
+    #unsupported h2 { font-size: 15px; margin: 18px 0 6px; color: #f6d55c; }
+    #unsupported p, #unsupported li { margin: 4px 0; color: #ccc; }
+    #unsupported code { font: 12px ui-monospace, monospace; background: #1a1a1a; padding: 1px 5px; border-radius: 4px; }
+    #unsupported a { color: #8fd18f; }
+    #unsupported .ua { font: 12px ui-monospace, monospace; color: #888; margin-top: 18px; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <div id="screen"></div>
+  <div id="loading" role="status" aria-live="polite">
+    <div class="ld-wrap">
+      <div class="ld-spinner brand-spinner" id="ld-spinner" aria-hidden="true"></div>
+      <div class="ld-title" id="ld-title">QGIS Desktop<small>WebAssembly</small></div>
+      <div class="ld-subtitle" id="ld-subtitle">The real QGIS — its C++ and Qt code — compiled for your browser. Nothing runs on a server.</div>
+      <div class="ld-stage"><span id="ld-stage">Preparing…</span><span id="ld-elapsed"></span></div>
+      <div class="ld-bar" id="ld-bar"><div id="ld-fill"></div></div>
+      <div class="ld-meter"><span id="ld-meter"></span><span id="ld-speed"></span></div>
+      <ul class="ld-files" id="ld-files"></ul>
+      <div class="ld-fact" id="ld-fact"></div>
+      <div class="ld-foot" id="ld-foot"></div>
+    </div>
+  </div>
+  <pre id="log"></pre>
+  <div id="unsupported" hidden></div>
+  <script>
+  // Preflight. This build needs WebAssembly JSPI (QGIS' modal dialogs are nested event loops) and SharedArrayBuffer
+  // (map rendering runs in worker threads; needs the COOP/COEP headers scripts/serve.mjs sends). Checking here, before
+  // 160 MB of wasm start downloading, turns a cryptic failure deep inside Qt into a page that says what is missing and
+  // what to do. ?force=1 skips the check (e.g. for an asyncify build).
+  (function () {
+    var missing = [];
+    if (typeof WebAssembly === 'undefined') {
+      missing.push({ what: 'WebAssembly', fix: 'Use a current browser.' });
+    } else if (typeof WebAssembly.Suspending !== 'function') {
+      missing.push({ what: 'WebAssembly JSPI (JavaScript Promise Integration)', why: 'QGIS runs modal dialogs and progress loops as nested event loops; this build suspends them with JSPI.',
+        fix: 'Use Chrome or Edge 137 or newer, or Safari 27 or newer. Firefox does not enable JSPI by default yet (Nightly: about:config → javascript.options.wasm_js_promise_integration).' });
+    }
+    if (typeof SharedArrayBuffer === 'undefined' || !self.crossOriginIsolated) {
+      missing.push({ what: 'SharedArrayBuffer (cross-origin isolation)', why: 'QGIS renders the map in worker threads that share memory with the main thread.',
+        fix: self.isSecureContext
+          ? 'The server has to send <code>Cross-Origin-Opener-Policy: same-origin</code> and <code>Cross-Origin-Embedder-Policy: credentialless</code> (or <code>require-corp</code>) with this page — <code>scripts/serve.mjs</code> does; for nginx / a CDN see docs/06.'
+          : 'Open the page over HTTPS or from <code>http://localhost</code> / <code>127.0.0.1</code>: SharedArrayBuffer only exists in secure contexts. For a server on another machine: <code>ssh -L 8123:127.0.0.1:8123 &lt;host&gt;</code> and open <code>http://127.0.0.1:8123/</code>.' });
+    }
+    var force = /[?&]force=1(&|$)/.test(location.search);
+    if (missing.length && !force && window.qgisCoiPending && missing.every(function (m) { return /SharedArrayBuffer/.test(m.what); })) {
+      // a static host: coi-serviceworker.js is registering and will reload the page with the headers in place
+      document.getElementById('ld-stage').textContent = 'Enabling cross-origin isolation (service worker) — reloading…';
+      window.qgisStatus = 'isolating';
+      return;
+    }
+    if (missing.length && !force) {
+      var el = document.getElementById('unsupported');
+      var items = missing.map(function (m) { return '<h2>' + m.what + '</h2>' + (m.why ? '<p>' + m.why + '</p>' : '') + '<p>' + m.fix + '</p>'; }).join('');
+      el.innerHTML = '<div class="card"><h1>This browser cannot run QGIS for WebAssembly here</h1>'
+        + '<p>Nothing was downloaded. The page checked the features this build depends on and found these missing:</p>' + items
+        + '<p style="margin-top:18px">Works today: Chrome / Edge 137+ on a secure origin with the COOP/COEP headers. '
+        + '<a href="' + location.pathname + (location.search ? location.search + '&' : '?') + 'force=1">Try anyway</a>.</p>'
+        + '<div class="ua">' + navigator.userAgent.replace(/</g, '&lt;') + '</div></div>';
+      el.hidden = false;
+      document.getElementById('loading').classList.add('hidden');
+      window.qgisStatus = 'unsupported';
+      window.qgisUnsupported = missing.map(function (m) { return m.what; });
+      return;
+    }
+    // the brand (brand.js): spinner and name on the loading page
+    var brand = window.qgisBrand || { name: 'QGIS Desktop', variant: 'WebAssembly', spinner: function () { return ''; } };
+    document.getElementById('ld-spinner').innerHTML = brand.spinner();
+    document.getElementById('ld-title').innerHTML = String(brand.name || 'QGIS Desktop').replace(/</g, '&lt;') + '<small>' + String(brand.variant || '').replace(/</g, '&lt;') + '</small>';
+    // In order (async = false keeps the sequence for dynamically inserted classic scripts):
+    //   qtloader.js   Qt for WebAssembly loader              qgis.js        the Emscripten module (qgis.wasm / qgis.data)
+    //   progress.js   the page's task bus (long operations report here; UIs listen)   loading.js   this loading page, one listener
+    //   cloudfs.js    object storage → /cloud/<name>         pyqgis.js      Python plugins (Pyodide, on demand)
+    //   link.js       URL scheme: deep links / share links   sources.js     pluggable query data sources
+    //   sources-overpass.js  one more query source type (OpenStreetMap via Overpass); a deployment's own types are web plugins
+    //   share.js        stored snapshots: ?share=<id>, project_share, share_refresh
+    //   workspace.js    the page's panel (front door of the web layer)   debug.js   web + QGIS logs, timings, memory (a workspace view)
+    //   qgis-shell.js preset, window.qgis (tool contract), loading page, web plugins, agent transport, startup
+    //   agent/agent.js (module)  the web agent; talks to QGIS only through window.qgis, renders into the workspace
+    ['qtloader.js', 'qgis.js', 'progress.js', 'loading.js', 'cloudfs.js', 'pyqgis.js', 'link.js', 'sources.js', 'sources-overpass.js', 'share.js', 'workspace.js', 'debug.js', 'qgis-shell.js'].forEach(function (src) {
+      var s = document.createElement('script'); s.src = src; s.async = false; document.body.appendChild(s);
+    });
+    var m = document.createElement('script'); m.type = 'module'; m.src = 'agent/agent.js'; document.body.appendChild(m);
+  })();
+  </script>
+</body>
+</html>
